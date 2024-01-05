@@ -28,7 +28,7 @@ router.get("/product/:id", (req, res) => {
   });
 });
 
-router.post("/products", (req, res) => {
+router.post("/product/add", (req, res) => {
   const { name, description, image, price, discount, stock } = req.body;
   const values = [name, description, image, price, discount, stock];
 
@@ -57,40 +57,83 @@ router.post("/products", (req, res) => {
   );
 });
 
-router.put("/products/:id", (req, res) => {
+router.patch("/product/modify/:id", (req, res) => {
   const id = req.params.id;
-  const { name, description, image, price, discount, stock } = req.body;
-  const values = [name, description, image, price, discount, stock, id];
+  const updatedFields = req.body;
 
-  db.query(
-    "UPDATE products SET name = ?, description = ?, image = ?, price = ?, discount = ?, stock = ? WHERE id = ?",
-    values,
-    (err, results) => {
-      if (err) {
-        res.status(400).json({ message: err.message });
-        return;
-      }
+  if (Object.keys(updatedFields).length === 0) {
+    return res.status(400).json({ message: "No fields provided for update." });
+  }
 
-      if (results.affectedRows > 0) {
-        db.query(
-          "SELECT * FROM products WHERE id = ?",
-          [id],
-          (err, updatedProduct) => {
-            if (err) {
-              res.status(500).json({ message: err.message });
-              return;
-            }
-            res.json(updatedProduct[0]);
-          }
-        );
-      } else {
-        res.status(404).json({ message: "Product not found" });
-      }
+  const values = Object.values(updatedFields);
+  values.push(id);
+
+  const setClause = Object.keys(updatedFields)
+    .map((field) => `${field} = ?`)
+    .join(", ");
+
+  const query = `UPDATE products SET ${setClause} WHERE id = ?`;
+
+  db.query(query, values, (err, results) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
     }
-  );
+
+    if (results.affectedRows > 0) {
+      db.query(
+        "SELECT * FROM products WHERE id = ?",
+        [id],
+        (err, updatedProduct) => {
+          if (err) {
+            return res.status(500).json({ message: err.message });
+          }
+          return res.json(updatedProduct[0]);
+        }
+      );
+    } else {
+      return res.status(404).json({ message: "Product not found" });
+    }
+  });
 });
 
-router.delete("/products/:id", (req, res) => {
+router.patch("/product/stock/:id", (req, res) => {
+  const id = req.params.id;
+
+  db.query("SELECT stock FROM products WHERE id = ?", [id], (err, results) => {
+    if (err) {
+      res.status(500).json({ message: err.message });
+      return;
+    }
+
+    if (results.length === 0) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
+    const currentStock = results[0].stock;
+
+    if (currentStock > 0) {
+      const newStock = currentStock - 1;
+
+      db.query(
+        "UPDATE products SET stock = ? WHERE id = ?",
+        [newStock, id],
+        (err, updateResult) => {
+          if (err) {
+            res.status(500).json({ message: err.message });
+            return;
+          }
+
+          res.json({ message: "Stock decremented successfully", newStock });
+        }
+      );
+    } else {
+      res.status(400).json({ message: "Product out of stock" });
+    }
+  });
+});
+
+router.delete("/product/delete/:id", (req, res) => {
   const id = req.params.id;
 
   db.query("DELETE FROM products WHERE id = ?", [id], (err, results) => {
