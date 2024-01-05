@@ -28,6 +28,26 @@ router.get("/product/:id", (req, res) => {
   });
 });
 
+router.get("/product/search/:query", (req, res) => {
+  const query = req.params.query;
+
+  // Construire la requête SQL
+  const sql = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
+
+  // Exécuter la requête SQL avec le terme de recherche correspondant
+  const searchTerm = `%${query}%`;
+  const values = [searchTerm, searchTerm];
+
+  db.query(sql, values, (err, results) => {
+    if (err) {
+      res.status(500).json({ message: err.message });
+      return;
+    }
+
+    res.json(results);
+  });
+});
+
 router.post("/product/add", (req, res) => {
   const { name, description, image, price, discount, stock } = req.body;
   const values = [name, description, image, price, discount, stock];
