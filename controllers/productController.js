@@ -2,7 +2,7 @@ const productModel = require("../models/productModel");
 const { verifyToken, checkOrder } = require("../middlewares/authMiddleware");
 const { Upload } = require("@aws-sdk/lib-storage");
 const { S3 } = require("@aws-sdk/client-s3");
-const { ManagedUpload } = require("aws-sdk/lib/s3/managed_upload");
+const { ManagedUpload } = require("aws-sdk");
 const multer = require("multer");
 const upload = multer({
   storage: multer.memoryStorage(),
