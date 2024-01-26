@@ -1,6 +1,6 @@
 const verifyToken = async (token) => {
   try {
-    const authResponse = await fetch("A CHANGER", {
+    const authResponse = await fetch(process.env.API_ADMIN, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,7 +26,7 @@ const verifyToken = async (token) => {
 
 const checkOrder = async (userId, productId) => {
   try {
-    const orderResponse = await fetch("A CHANGER", {
+    const orderResponse = await fetch(process.env.API_ORDER, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
